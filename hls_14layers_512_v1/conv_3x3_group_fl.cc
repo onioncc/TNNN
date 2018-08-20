@@ -13,6 +13,9 @@ void load_weights(FIX_WT weight_buf[BUF_DPTH],
 				  FIX_WT weights[BUF_DPTH][3][3],
 				  int i, int j)
 {
+#pragma HLS array_partition variable=weights dim=1 complete
+#pragma HLS array_partition variable=weight_buf dim=1 complete
+
 	for(int coo = 0; coo < BUF_DPTH; coo++){
 #pragma HLS unroll
 		weight_buf[coo] = weights[coo][i][j];
@@ -25,8 +28,17 @@ void CONV_3x3_group(FIX_FM bottom[BUF_DPTH][22][42],
 					FIX_FM top[BUF_DPTH][22][42],
 					FIX_WT weights[BUF_DPTH][3][3])
 {
-
 	FIX_WT weight_buf[BUF_DPTH];
+
+//#pragma HLS array_partition variable=top dim=1 cyclic factor=16
+//#pragma HLS array_partition variable=bottom dim=1 cyclic factor=16
+
+#pragma HLS array_partition variable=top dim=1 complete
+#pragma HLS array_partition variable=bottom dim=1 complete
+
+
+#pragma HLS array_partition variable=weight_buf dim=1 complete
+
 
 
 	for(int i = 0; i < 3; i++){

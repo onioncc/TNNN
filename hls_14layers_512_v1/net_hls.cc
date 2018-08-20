@@ -141,7 +141,7 @@ void buffer_copy_to_axi( FIX_FM dest[BUF_DPTH][22][42], FIX_FM src[BUF_DPTH][22]
 	for(int i = 0; i < BUF_DPTH; i++) {
 		for(int j = 0; j < 22; j++) {
 			for(int k = 0; k < 42; k++) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 				dest[i][j][k] = src[i][j][k];
 			}
 		}
@@ -155,7 +155,7 @@ void buffer_copy_from_axi( FIX_FM dest[BUF_DPTH][22][42], FIX_FM src[BUF_DPTH][2
 	for(int i = 0; i < BUF_DPTH; i++) {
 		for(int j = 0; j < 22; j++) {
 			for(int k = 0; k < 42; k++) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 				dest[i][j][k] = src[i][j][k];
 			}
 		}
@@ -168,7 +168,7 @@ void load_weight_2D_from_axi( FIX_WT dest[BUF_DPTH][BUF_DPTH], FIX_WT src[BUF_DP
 {
 	for(int i = 0; i < BUF_DPTH; i++) {
 		for(int j = 0; j < BUF_DPTH; j++) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 			dest[i][j] = src[i][j];
 		}
 	}
@@ -179,7 +179,7 @@ void load_weight_3D_from_axi( FIX_WT dest[BUF_DPTH][3][3], FIX_WT src[BUF_DPTH][
 	for(int i = 0; i < BUF_DPTH; i++) {
 		for(int j = 0; j < 3; j++) {
 			for(int k = 0; k < 3; k++) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 				dest[i][j][k] = src[i][j][k];
 			}
 		}
@@ -196,9 +196,15 @@ void load_bias_from_axi(FIX_WT dest[BUF_DPTH][BUF_DPTH], FIX_WT src[BUF_DPTH])
 
 void set_bias( FIX_FM buf[BUF_DPTH][22][42], FIX_WT bias[BUF_DPTH][BUF_DPTH])
 {
+//#pragma HLS array_partition variable=buf dim=1 cyclic factor=16
+//#pragma HLS array_partition variable=bias dim=1 cyclic factor=16
+
+#pragma HLS array_partition variable=buf dim=1 complete
+#pragma HLS array_partition variable=bias dim=1 complete
+
 	for(int j = 1; j <= 20; j++) {
 		for(int k = 1; k <= 40; k++) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 
 			for(int i = 0; i < BUF_DPTH; i++)
 				buf[i][j][k] = bias[i][0];
@@ -212,7 +218,7 @@ void copy_to_DDR_pool9( FIX_FM dest[BUF_DPTH][22][42], FIX_FM buf[BUF_DPTH][10][
 	for(int i = 0; i < BUF_DPTH; i++) {
 		for(int j = 0; j < 10; j++) {
 			for(int k = 0; k < 20; k++) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 				dest[i][j+1 + b_col*10][k+1 + b_row*20] = buf[i][j][k];
 			}
 		}
@@ -227,7 +233,7 @@ void copy_to_DDR_pool3( FIX_FM ddr_pool3[l3_cd * BUF_DPTH][82][162], FIX_FM buf[
 	for(int i = 0; i < BUF_DPTH; i++) {
 		for(int j = 0; j < 10; j++) {
 			for(int k = 0; k < 20; k++) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 				ddr_pool3[i + ch*BUF_DPTH][j+1 + col*10][k+1 + row*20] = buf[i][j][k];
 			}
 		}
@@ -240,7 +246,7 @@ void copy_to_DDR_pool6( FIX_FM ddr_pool6[l6_cd * BUF_DPTH][42][82], FIX_FM buf[B
 	for(int i = 0; i < BUF_DPTH; i++) {
 		for(int j = 0; j < 10; j++) {
 			for(int k = 0; k < 20; k++) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 				ddr_pool6[i + ch*BUF_DPTH][j+1 + col*10][k+1 + row*20] = buf[i][j][k];
 			}
 		}
@@ -255,7 +261,7 @@ void load_pool3_from_axi(FIX_FM buf[BUF_DPTH][22][42], FIX_FM DDR_pool3[48][82][
 	for(int i = 0; i < BUF_DPTH; i++) {
 		for(int h = 0; h < 22; h++) {
 			for(int w = 0; w < 42; w++ ) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 				buf[i][h][w] = DDR_pool3[i + ch*BUF_DPTH][h + col*20][w + row*40];
 			}
 		}
@@ -269,7 +275,7 @@ void load_pool6_from_axi(FIX_FM buf[BUF_DPTH][22][42], FIX_FM DDR_pool6[96][42][
 	for(int i = 0; i < BUF_DPTH; i++) {
 		for(int h = 0; h < 22; h++) {
 			for(int w = 0; w < 42; w++ ) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 				buf[i][h][w] = DDR_pool6[i + ch*BUF_DPTH][h + col*20][w + row*40];
 			}
 		}
@@ -356,11 +362,18 @@ inline FIX_FM max(FIX_FM a, FIX_FM b, FIX_FM c, FIX_FM d)
 void max_pooling(FIX_FM buf_in[BUF_DPTH][22][42], FIX_FM buf_out[BUF_DPTH][10][20])
 {
 
+//#pragma HLS array_partition variable=buf_in dim=1 cyclic factor=16
+//#pragma HLS array_partition variable=buf_out dim=1 cyclic factor=16
+
+#pragma HLS array_partition variable=buf_in dim=1 complete
+#pragma HLS array_partition variable=buf_out dim=1 complete
+
+
 	for(int i = 0; i < 10; i++) {
 		for(int j = 0; j < 20; j++) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 			for(int ch = 0; ch < BUF_DPTH; ch++) {
-//#pragma HLS unroll
+#pragma HLS unroll
 				buf_out[ch][i][j] = max(buf_in[ch][i*2+1][j*2+1], buf_in[ch][i*2+1][j*2+2],
 								     	  buf_in[ch][i*2+2][j*2+1], buf_in[ch][i*2+2][j*2+2]);
 			}
@@ -399,11 +412,15 @@ void clear_padding( FIX_FM buf[BUF_DPTH][22][42])
 
 void Relu( FIX_FM buf[BUF_DPTH][22][42] )
 {
+
+//#pragma HLS array_partition variable=buf dim=1 cyclic factor=16
+#pragma HLS array_partition variable=buf dim=1 complete
+
 	for(int j = 1; j <= 20; j++) {
 		for(int k = 1; k <= 40; k++) {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 			for(int i = 0; i < BUF_DPTH; i++) {
-//#pragma HLS unroll
+#pragma HLS unroll
 				if( buf[i][j][k] < 0 ) {
 					buf[i][j][k] = 0;
 				}
@@ -470,8 +487,8 @@ void mobilenet(uint8 image_in_raw_pad[3][162][322],
 #pragma HLS ALLOCATION instances=load_weight_2D_from_axi	limit=1 function
 
 
-//#pragma HLS ARRAY_PARTITION variable=FM_bufs dim=1 block factor=16
-#pragma HLS ARRAY_PARTITION variable=FM_bufs dim=2 block factor=16
+//#pragma HLS ARRAY_PARTITION variable=FM_bufs dim=2 cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=FM_bufs dim=1 complete
 
 
 

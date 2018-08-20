@@ -122,8 +122,11 @@ FIX_WT weight_buf[BUF_DPTH][BUF_DPTH];
 FIX_32_12 tmp[8];
 
 #pragma HLS array_partition variable=tmp dim=1 complete
-#pragma HLS array_partition variable=top dim=1 block factor=16
-#pragma HLS array_partition variable=bottom dim=1 block factor=16
+#pragma HLS array_partition variable=top dim=1 complete
+#pragma HLS array_partition variable=bottom dim=1 complete
+
+//#pragma HLS array_partition variable=top dim=1 cyclic factor=16
+//#pragma HLS array_partition variable=bottom dim=1 cyclic factor=16
 #pragma HLS array_partition variable=weight_buf dim=1 complete
 #pragma HLS array_partition variable=weight_buf dim=2 complete
 
@@ -137,10 +140,10 @@ FIX_32_12 tmp[8];
 	for(int h = 1; h <= 20; h++){
 		for(int w = 1; w <= 40; w++) {
 
-#pragma HLS pipeline
 			for(int cin = 0; cin < BUF_DPTH; cin+=16) {
-				for(int co = 0; co < BUF_DPTH; co+=16) {
-					for(int coo = 0; coo < 16; coo++) {
+#pragma HLS pipeline
+				for(int co = 0; co < BUF_DPTH; co+=8) {
+					for(int coo = 0; coo < 8; coo++) {
 #pragma HLS unroll
 						top[co+coo][h][w] += compute_engine_16(
 												 weight_buf[co+coo][0 + cin],   bottom[0 + cin][h][w],
