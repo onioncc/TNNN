@@ -29,7 +29,7 @@ typedef ap_uint<8> uint8;
 	//typedef float FIX_16_1;
 #else
 	//typedef ap_fixed<16, 6, AP_RND_INF, AP_SAT> FIX_FM;	//fix point for feature map
-	typedef ap_fixed<8, 5, AP_RND_INF, AP_SAT> FIX_FM;	//fix point for feature map
+	typedef ap_fixed<16, 5, AP_RND_INF, AP_SAT> FIX_FM;	//fix point for feature map
 	typedef ap_fixed<8, 5, AP_RND_INF, AP_SAT> FIX_FM_last;	//fix point for feature map of the last layer
 	typedef ap_fixed<8,  1, AP_RND_INF, AP_SAT> FIX_WT;	//fix point for weights
 	//typedef ap_fixed<16, 1, AP_RND_INF, AP_SAT> FIX_16_1;	//fix point for weights

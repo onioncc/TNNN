@@ -113,6 +113,34 @@ FIX_FM compute_engine_8(FIX_WT w0,  FIX_FM b0,
 
 
 
+/*void outer()
+{
+
+FIX_FM data[16][BUF_DPTH][22][42];
+FIX_WT weights[BUF_DPTH][BUF_DPTH];
+
+#pragma HLS array_partition variable=data dim=1 complete
+
+CONV_1x1(data[0], data[1], weights);
+CONV_1x1(data[0], data[2], weights);
+CONV_1x1(data[0], data[3], weights);
+CONV_1x1(data[0], data[4], weights);
+CONV_1x1(data[0], data[5], weights);
+CONV_1x1(data[0], data[6], weights);
+CONV_1x1(data[0], data[7], weights);
+CONV_1x1(data[0], data[8], weights);
+CONV_1x1(data[0], data[9], weights);
+CONV_1x1(data[0], data[10], weights);
+CONV_1x1(data[0], data[11], weights);
+CONV_1x1(data[0], data[12], weights);
+CONV_1x1(data[0], data[13], weights);
+CONV_1x1(data[0], data[14], weights);
+CONV_1x1(data[0], data[15], weights);
+
+
+}*/
+
+
 
 void CONV_1x1(FIX_FM bottom[BUF_DPTH][22][42],
 			  FIX_FM top[BUF_DPTH][22][42],
@@ -122,11 +150,12 @@ FIX_WT weight_buf[BUF_DPTH][BUF_DPTH];
 FIX_32_12 tmp[8];
 
 #pragma HLS array_partition variable=tmp dim=1 complete
-#pragma HLS array_partition variable=top dim=1 complete
-#pragma HLS array_partition variable=bottom dim=1 complete
+//#pragma HLS array_partition variable=top dim=1 complete
+//#pragma HLS array_partition variable=bottom dim=1 complete
 
-//#pragma HLS array_partition variable=top dim=1 cyclic factor=16
-//#pragma HLS array_partition variable=bottom dim=1 cyclic factor=16
+#pragma HLS array_partition variable=top dim=1 cyclic factor=32
+#pragma HLS array_partition variable=bottom dim=1 cyclic factor=32
+
 #pragma HLS array_partition variable=weight_buf dim=1 complete
 #pragma HLS array_partition variable=weight_buf dim=2 complete
 
@@ -143,6 +172,7 @@ FIX_32_12 tmp[8];
 			for(int cin = 0; cin < BUF_DPTH; cin+=16) {
 #pragma HLS pipeline
 				for(int co = 0; co < BUF_DPTH; co+=8) {
+//#pragma HLS pipeline
 					for(int coo = 0; coo < 8; coo++) {
 #pragma HLS unroll
 						top[co+coo][h][w] += compute_engine_16(
