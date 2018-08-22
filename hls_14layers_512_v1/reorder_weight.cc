@@ -555,13 +555,16 @@ void reorder_weight_fix()
 
 
     // write conv_1x1 weights into params_fix_384.bin
-    ofs_param_write.write((char*)fix_conv_weight_1x1_all, all_1x1*BUF_DPTH*BUF_DPTH*sizeof(FIX_WT));
+    //ofs_param_write.write((char*)fix_conv_weight_1x1_all, all_1x1*BUF_DPTH*BUF_DPTH*sizeof(FIX_WT));
+	//ofs_param_write.write((char*)fix_conv_weight_1x1_all, all_1x1*32*32*sizeof(FIX_WT));
 
-    // write conv_3x3 into params_fix_384.bin
-    ofs_param_write.write((char*)fix_conv_weight_3x3_all, all_3x3*BUF_DPTH*3*3*sizeof(FIX_WT));
+	ofs_param_write.write((char*)fix_conv_weight_1x1_all, (index_1x1+1)*32*32*sizeof(FIX_WT));
+
+	// write conv_3x3 into params_fix_384.bin
+    ofs_param_write.write((char*)fix_conv_weight_3x3_all, (index_3x3+1)*BUF_DPTH*3*3*sizeof(FIX_WT));
 
     // write bias_all into params_fix_384.bin
-    ofs_param_write.write((char*)fix_bias_all, all_bias*BUF_DPTH*sizeof(FIX_WT));
+    ofs_param_write.write((char*)fix_bias_all, (index_bias+1)*BUF_DPTH*sizeof(FIX_WT));
 
     ofs_param_write.close();
 

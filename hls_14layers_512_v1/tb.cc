@@ -131,6 +131,7 @@ int test_one_frame( char* filename )
     reorder_weight_fix();
 
 
+
     float predict_box[5];
 
 
@@ -171,6 +172,7 @@ int test_one_frame( char* filename )
 	y2 = (unsigned int)(((predict_box[1] + predict_box[3]/2.0) * 360));
 
 	printf("%d %d %d %d\n", x1, y1, x2, y2);
+
 
 
 

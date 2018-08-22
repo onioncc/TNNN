@@ -25,16 +25,18 @@ typedef ap_uint<8> uint8;
 	typedef float FIX_FM_last;
 	typedef float FIX_WT;	//fix point for weights
 	typedef float FIX_32_16;	//fix point
-	typedef float FIX_32_12;	//fix point
-	//typedef float FIX_16_1;
+	typedef float FIX_32_10;	//fix point
+	typedef float FIX_16_5;
+	typedef float FIX_16_10;
 #else
 	//typedef ap_fixed<16, 6, AP_RND_INF, AP_SAT> FIX_FM;	//fix point for feature map
-	typedef ap_fixed<16, 5, AP_RND_INF, AP_SAT> FIX_FM;	//fix point for feature map
+	typedef ap_fixed<8, 5, AP_RND_INF, AP_SAT> FIX_FM;	//fix point for feature map
 	typedef ap_fixed<8, 5, AP_RND_INF, AP_SAT> FIX_FM_last;	//fix point for feature map of the last layer
 	typedef ap_fixed<8,  1, AP_RND_INF, AP_SAT> FIX_WT;	//fix point for weights
-	//typedef ap_fixed<16, 1, AP_RND_INF, AP_SAT> FIX_16_1;	//fix point for weights
+	typedef ap_fixed<16, 5, AP_RND_INF, AP_SAT> FIX_16_5;	//fix point for weights
+	typedef ap_fixed<16, 10, AP_RND_INF, AP_SAT> FIX_16_10;	//fix point for weights
 	typedef ap_fixed<32,16, AP_RND_INF, AP_SAT> FIX_32_16;	//fix point
-	typedef ap_fixed<32,12, AP_RND_INF, AP_SAT> FIX_32_12;
+	typedef ap_fixed<32,10, AP_RND_INF, AP_SAT> FIX_32_10;
 	typedef ap_fixed<32, 4, AP_RND_INF, AP_SAT> FIX_32_4;	//fix point
 	typedef ap_fixed<32,25, AP_RND_INF, AP_SAT> FIX_32_25;	//fix point
 #endif

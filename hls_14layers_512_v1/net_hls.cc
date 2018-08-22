@@ -229,23 +229,34 @@ void load_weight_3D_from_axi( FIX_WT dest[BUF_DPTH][3][3], FIX_WT src[BUF_DPTH][
 void load_bias_from_axi(FIX_WT dest[BUF_DPTH][BUF_DPTH], FIX_WT src[BUF_DPTH])
 {
 	for(int i = 0; i < BUF_DPTH; i++) {
+#pragma HLS pipeline
 		dest[i][0] = src[i];
 	}
 }
 
 void set_bias( FIX_FM buf[BUF_DPTH][22][42], FIX_WT bias[BUF_DPTH][BUF_DPTH])
 {
-#pragma HLS array_partition variable=buf dim=1 cyclic factor=32
-#pragma HLS array_partition variable=bias dim=1 cyclic factor=32
+#pragma HLS array_partition variable=buf dim=1 cyclic factor=16
+#pragma HLS array_partition variable=bias dim=1 cyclic factor=16
 
-//#pragma HLS array_partition variable=buf dim=1 complete
-//#pragma HLS array_partition variable=bias dim=1 complete
 
 	for(int j = 1; j <= 20; j++) {
 		for(int k = 1; k <= 40; k++) {
 #pragma HLS pipeline
 
-			for(int i = 0; i < BUF_DPTH; i++)
+			for(int i = 0; i < 16; i++)
+				buf[i][j][k] = bias[i][0];
+
+		}
+	}
+
+
+
+	for(int j = 1; j <= 20; j++) {
+		for(int k = 1; k <= 40; k++) {
+#pragma HLS pipeline
+
+			for(int i = 16; i < 32; i++)
 				buf[i][j][k] = bias[i][0];
 
 		}
@@ -401,8 +412,8 @@ inline FIX_FM max(FIX_FM a, FIX_FM b, FIX_FM c, FIX_FM d)
 void max_pooling(FIX_FM buf_in[BUF_DPTH][22][42], FIX_FM buf_out[BUF_DPTH][10][20])
 {
 
-#pragma HLS array_partition variable=buf_in dim=1 cyclic factor=32
-#pragma HLS array_partition variable=buf_out dim=1 cyclic factor=32
+#pragma HLS array_partition variable=buf_in dim=1 cyclic factor=16
+#pragma HLS array_partition variable=buf_out dim=1 cyclic factor=16
 
 //#pragma HLS array_partition variable=buf_in dim=1 complete
 //#pragma HLS array_reshape variable=buf_out dim=1 complete
@@ -411,7 +422,19 @@ void max_pooling(FIX_FM buf_in[BUF_DPTH][22][42], FIX_FM buf_out[BUF_DPTH][10][2
 	for(int i = 0; i < 10; i++) {
 		for(int j = 0; j < 20; j++) {
 #pragma HLS pipeline
-			for(int ch = 0; ch < BUF_DPTH; ch++) {
+			for(int ch = 0; ch < 16; ch++) {
+#pragma HLS unroll
+				buf_out[ch][i][j] = max(buf_in[ch][i*2+1][j*2+1], buf_in[ch][i*2+1][j*2+2],
+									  buf_in[ch][i*2+2][j*2+1], buf_in[ch][i*2+2][j*2+2]);
+			}
+		}
+	}
+
+
+	for(int i = 0; i < 10; i++) {
+		for(int j = 0; j < 20; j++) {
+#pragma HLS pipeline
+			for(int ch = 16; ch < 32; ch++) {
 #pragma HLS unroll
 				buf_out[ch][i][j] = max(buf_in[ch][i*2+1][j*2+1], buf_in[ch][i*2+1][j*2+2],
 									  buf_in[ch][i*2+2][j*2+1], buf_in[ch][i*2+2][j*2+2]);
@@ -452,13 +475,24 @@ void clear_padding( FIX_FM buf[BUF_DPTH][22][42])
 void Relu( FIX_FM buf[BUF_DPTH][22][42] )
 {
 
-#pragma HLS array_partition variable=buf dim=1 cyclic factor=32
-//#pragma HLS array_partition variable=buf dim=1 complete
+#pragma HLS array_partition variable=buf dim=1 cyclic factor=16
 
 	for(int j = 1; j <= 20; j++) {
 		for(int k = 1; k <= 40; k++) {
 #pragma HLS pipeline
-			for(int i = 0; i < BUF_DPTH; i++) {
+			for(int i = 0; i < 16; i++) {
+#pragma HLS unroll
+				if( buf[i][j][k] < 0 ) {
+					buf[i][j][k] = 0;
+				}
+			}
+		}
+	}
+
+	for(int j = 1; j <= 20; j++) {
+		for(int k = 1; k <= 40; k++) {
+#pragma HLS pipeline
+			for(int i = 16; i < 32; i++) {
 #pragma HLS unroll
 				if( buf[i][j][k] < 0 ) {
 					buf[i][j][k] = 0;
@@ -527,32 +561,6 @@ void mobilenet(uint8 image_in_raw_pad[3][162][322],
 #pragma HLS ALLOCATION instances=load_weight_2D_from_axi	limit=1 function
 
 
-#pragma HLS array_map variable=FM_buf1 instance=new1 vertical
-#pragma HLS array_map variable=FM_buf2 instance=new1 vertical
-
-/*
-#pragma HLS array_map variable=FM_buf3 instance=new2 vertical
-#pragma HLS array_map variable=FM_buf4 instance=new2 vertical
-
-#pragma HLS array_map variable=FM_buf5 instance=new3 vertical
-#pragma HLS array_map variable=FM_buf6 instance=new3 vertical
-
-#pragma HLS array_map variable=FM_buf7 instance=new4 vertical
-#pragma HLS array_map variable=FM_buf8 instance=new4 vertical
-
-#pragma HLS array_map variable=FM_buf9 instance=new5 vertical
-#pragma HLS array_map variable=FM_buf10 instance=new5 vertical
-
-#pragma HLS array_map variable=FM_buf11 instance=new6 vertical
-#pragma HLS array_map variable=FM_buf12 instance=new6 vertical
-
-#pragma HLS array_map variable=FM_buf13 instance=new7 vertical
-#pragma HLS array_map variable=FM_buf14 instance=new7 vertical
-
-#pragma HLS array_map variable=FM_buf15 instance=new8 vertical
-#pragma HLS array_map variable=FM_buf16 instance=new8 vertical
-*/
-
 
 	int weight_1x1_index = 0;
 	int weight_3x3_index = 0;
@@ -570,7 +578,7 @@ void mobilenet(uint8 image_in_raw_pad[3][162][322],
 
 	for(int row = 0; row < 8; row++) {
 		for(int col = 0; col < 8; col++) {
-//#pragma HLS unroll
+#pragma HLS unroll
 
 			bias_index = 0;
 			weight_1x1_index = 0;
@@ -597,7 +605,7 @@ fill_output_fix(1, FM_buf2, 0, col, row);
 
 
 			for(int ch_conv2 = 0; ch_conv2 < l2_cd; ch_conv2++) {
-//#pragma HLS unroll
+#pragma HLS unroll
 
 				///// CONV_2 (1x1)  <---  CONV_1 ch:{{_ch_conv2}} col:{{_col}} row:{{_row}}
 				load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
@@ -641,7 +649,7 @@ fill_output_fix(1, FM_buf2, 0, col, row);
 
 	for(int row = 0; row < 4; row++) {
 		for(int col = 0; col < 4; col++) {
-//#pragma HLS unroll
+#pragma HLS unroll
 
 			weight_1x1_index = pre_weight_1x1_index;
 			weight_3x3_index = pre_weight_3x3_index;
@@ -677,15 +685,15 @@ fill_output_fix(4, FM_buf2, 0, col, row);
 
 				///// CONV_4  <---  POOL_3 ch:{{ch_conv4}} col:{{_col}} row:{{_row}}
 				// load weight
-				load_weight_3D_from_axi(weight_buf_3x3_1, conv_weight_3x3_all[weight_3x3_index]);
+				load_weight_3D_from_axi(weight_buf_3x3_2, conv_weight_3x3_all[weight_3x3_index]);
 				// load bias
 				load_bias_from_axi(bias_buf, bias_all[bias_index]);
 
 				// load from DDR_pool_3_out_PL
-				load_pool3_from_axi(FM_buf1, DDR_pool3_out_PL, 1, col, row);
+				load_pool3_from_axi(FM_buf14, DDR_pool3_out_PL, 1, col, row);
 
 				set_bias(FM_buf3, bias_buf);
-				CONV_3x3_group(FM_buf1, FM_buf3, weight_buf_3x3_1);
+				CONV_3x3_group(FM_buf14, FM_buf3, weight_buf_3x3_2);
 				Relu(FM_buf3);
 
 				weight_3x3_index++;
@@ -707,7 +715,7 @@ fill_output_fix(4, FM_buf3, 1, col, row);
 
 
 			for(int ch_conv5 = 0; ch_conv5 < l5_cd; ch_conv5++) {
-//#pragma HLS unroll
+#pragma HLS unroll
 
 				load_bias_from_axi(bias_buf, bias_all[bias_index]);
 				bias_index++;
@@ -718,8 +726,8 @@ fill_output_fix(4, FM_buf3, 1, col, row);
 					CONV_1x1(FM_buf2, FM_buf_1x1_out, weight_buf_1x1_1);
 					weight_1x1_index++;
 
-					load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
-					CONV_1x1(FM_buf3, FM_buf_1x1_out, weight_buf_1x1_1);
+					load_weight_2D_from_axi(weight_buf_1x1_2, conv_weight_1x1_all[weight_1x1_index]);
+					CONV_1x1(FM_buf3, FM_buf_1x1_out, weight_buf_1x1_2);
 					weight_1x1_index++;
 
 				//}
@@ -789,12 +797,12 @@ fill_output_fix(4, FM_buf3, 1, col, row);
 
 
 				///// CONV_7  <--- POOL_6 ch:{{_ch_conv7}} col:{{_col}} row:{{_row}}
-				load_weight_3D_from_axi(weight_buf_3x3_1, conv_weight_3x3_all[weight_3x3_index]);
+				load_weight_3D_from_axi(weight_buf_3x3_2, conv_weight_3x3_all[weight_3x3_index]);
 				load_bias_from_axi(bias_buf, bias_all[bias_index]);
-				load_pool6_from_axi(FM_buf1, DDR_pool6_out_PL, 1, col, row);
+				load_pool6_from_axi(FM_buf14, DDR_pool6_out_PL, 1, col, row);
 
 				set_bias(FM_buf3, bias_buf);
-				CONV_3x3_group(FM_buf1, FM_buf3, weight_buf_3x3_1);
+				CONV_3x3_group(FM_buf14, FM_buf3, weight_buf_3x3_2);
 				Relu(FM_buf3);
 #ifdef CSIM_DEBUG
 	fill_output(7, FM_buf3, 1, col, row);
@@ -847,8 +855,8 @@ fill_output_fix(4, FM_buf3, 1, col, row);
 					CONV_1x1(FM_buf2, FM_buf_1x1_out, weight_buf_1x1_1);
 					weight_1x1_index++;
 
-					load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
-					CONV_1x1(FM_buf3, FM_buf_1x1_out, weight_buf_1x1_1);
+					load_weight_2D_from_axi(weight_buf_1x1_2, conv_weight_1x1_all[weight_1x1_index]);
+					CONV_1x1(FM_buf3, FM_buf_1x1_out, weight_buf_1x1_2);
 					weight_1x1_index++;
 
 					load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
@@ -919,12 +927,12 @@ fill_output_fix(4, FM_buf3, 1, col, row);
 
 
 	///// CONV_10  <--- POOL_9 ch:{{_ch_conv10}} col:{{_col}} row:{{_row}}
-	load_weight_3D_from_axi(weight_buf_3x3_1, conv_weight_3x3_all[weight_3x3_index]);
+	load_weight_3D_from_axi(weight_buf_3x3_2, conv_weight_3x3_all[weight_3x3_index]);
 	load_bias_from_axi(bias_buf, bias_all[bias_index]);
-	buffer_copy_from_axi(FM_buf1, DDR_buf[1]);
+	buffer_copy_from_axi(FM_buf14, DDR_buf[1]);
 
 	set_bias(FM_buf3, bias_buf);
-	CONV_3x3_group(FM_buf1, FM_buf3, weight_buf_3x3_1);
+	CONV_3x3_group(FM_buf14, FM_buf3, weight_buf_3x3_2);
 	Relu(FM_buf3);
 
 	weight_3x3_index++;
@@ -961,12 +969,12 @@ fill_output_fix(10, FM_buf4, 2, col, row);
 
 
 ///// CONV_10  <--- POOL_9 ch:{{_ch_conv10}} col:{{_col}} row:{{_row}}
-load_weight_3D_from_axi(weight_buf_3x3_1, conv_weight_3x3_all[weight_3x3_index]);
+load_weight_3D_from_axi(weight_buf_3x3_2, conv_weight_3x3_all[weight_3x3_index]);
 load_bias_from_axi(bias_buf, bias_all[bias_index]);
-buffer_copy_from_axi(FM_buf1, DDR_buf[3]);
+buffer_copy_from_axi(FM_buf14, DDR_buf[3]);
 
 set_bias(FM_buf5, bias_buf);
-CONV_3x3_group(FM_buf1, FM_buf5, weight_buf_3x3_1);
+CONV_3x3_group(FM_buf14, FM_buf5, weight_buf_3x3_2);
 Relu(FM_buf5);
 
 weight_3x3_index++;
@@ -1003,12 +1011,12 @@ fill_output_fix(10, FM_buf6, 4, col, row);
 
 
 ///// CONV_10  <--- POOL_9 ch:{{_ch_conv10}} col:{{_col}} row:{{_row}}
-load_weight_3D_from_axi(weight_buf_3x3_1, conv_weight_3x3_all[weight_3x3_index]);
+load_weight_3D_from_axi(weight_buf_3x3_2, conv_weight_3x3_all[weight_3x3_index]);
 load_bias_from_axi(bias_buf, bias_all[bias_index]);
-buffer_copy_from_axi(FM_buf1, DDR_buf[5]);
+buffer_copy_from_axi(FM_buf14, DDR_buf[5]);
 
 set_bias(FM_buf7, bias_buf);
-CONV_3x3_group(FM_buf1, FM_buf7, weight_buf_3x3_1);
+CONV_3x3_group(FM_buf14, FM_buf7, weight_buf_3x3_2);
 Relu(FM_buf7);
 
 weight_3x3_index++;
@@ -1045,24 +1053,24 @@ fill_output_fix(10, FM_buf7, 5, col, row);
 					CONV_1x1(FM_buf2, FM_buf_1x1_out, weight_buf_1x1_1);
 					weight_1x1_index++;
 
-					load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
-					CONV_1x1(FM_buf3, FM_buf_1x1_out, weight_buf_1x1_1);
+					load_weight_2D_from_axi(weight_buf_1x1_2, conv_weight_1x1_all[weight_1x1_index]);
+					CONV_1x1(FM_buf3, FM_buf_1x1_out, weight_buf_1x1_2);
 					weight_1x1_index++;
 
 					load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
 					CONV_1x1(FM_buf4, FM_buf_1x1_out, weight_buf_1x1_1);
 					weight_1x1_index++;
 
-					load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
-					CONV_1x1(FM_buf5, FM_buf_1x1_out, weight_buf_1x1_1);
+					load_weight_2D_from_axi(weight_buf_1x1_2, conv_weight_1x1_all[weight_1x1_index]);
+					CONV_1x1(FM_buf5, FM_buf_1x1_out, weight_buf_1x1_2);
 					weight_1x1_index++;
 
 					load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
 					CONV_1x1(FM_buf6, FM_buf_1x1_out, weight_buf_1x1_1);
 					weight_1x1_index++;
 
-					load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
-					CONV_1x1(FM_buf7, FM_buf_1x1_out, weight_buf_1x1_1);
+					load_weight_2D_from_axi(weight_buf_1x1_2, conv_weight_1x1_all[weight_1x1_index]);
+					CONV_1x1(FM_buf7, FM_buf_1x1_out, weight_buf_1x1_2);
 					weight_1x1_index++;
 				//}
 
@@ -1108,12 +1116,12 @@ fill_output_fix(10, FM_buf7, 5, col, row);
 #endif
 
 
-	buffer_copy_from_axi(FM_buf1, DDR_buf[1]);
-	load_weight_3D_from_axi(weight_buf_3x3_1, conv_weight_3x3_all[weight_3x3_index]);
+	buffer_copy_from_axi(FM_buf14, DDR_buf[1]);
+	load_weight_3D_from_axi(weight_buf_3x3_2, conv_weight_3x3_all[weight_3x3_index]);
 	load_bias_from_axi(bias_buf, bias_all[bias_index]);
 
 	set_bias(FM_buf3, bias_buf);
-	CONV_3x3_group(FM_buf1, FM_buf3, weight_buf_3x3_1);
+	CONV_3x3_group(FM_buf14, FM_buf3, weight_buf_3x3_2);
 	Relu(FM_buf3);
 	//buffer_copy_to_axi(DDR_buf[ch_conv12], FM_bufs[2]);
 
@@ -1152,12 +1160,12 @@ fill_output_fix(12, FM_buf4, 2, 0, 0);
 #endif
 
 
-buffer_copy_from_axi(FM_buf1, DDR_buf[3]);
-load_weight_3D_from_axi(weight_buf_3x3_1, conv_weight_3x3_all[weight_3x3_index]);
+buffer_copy_from_axi(FM_buf14, DDR_buf[3]);
+load_weight_3D_from_axi(weight_buf_3x3_2, conv_weight_3x3_all[weight_3x3_index]);
 load_bias_from_axi(bias_buf, bias_all[bias_index]);
 
 set_bias(FM_buf5, bias_buf);
-CONV_3x3_group(FM_buf1, FM_buf5, weight_buf_3x3_1);
+CONV_3x3_group(FM_buf14, FM_buf5, weight_buf_3x3_2);
 Relu(FM_buf5);
 //buffer_copy_to_axi(DDR_buf[3], FM_bufs[2]);
 
@@ -1196,12 +1204,12 @@ fill_output_fix(12, FM_buf6, 4, 0, 0);
 #endif
 
 
-buffer_copy_from_axi(FM_buf1, DDR_buf[5]);
-load_weight_3D_from_axi(weight_buf_3x3_1, conv_weight_3x3_all[weight_3x3_index]);
+buffer_copy_from_axi(FM_buf14, DDR_buf[5]);
+load_weight_3D_from_axi(weight_buf_3x3_2, conv_weight_3x3_all[weight_3x3_index]);
 load_bias_from_axi(bias_buf, bias_all[bias_index]);
 
 set_bias(FM_buf7, bias_buf);
-CONV_3x3_group(FM_buf1, FM_buf7, weight_buf_3x3_1);
+CONV_3x3_group(FM_buf14, FM_buf7, weight_buf_3x3_2);
 Relu(FM_buf7);
 //buffer_copy_to_axi(DDR_buf[5], FM_bufs[2]);
 
@@ -1240,12 +1248,12 @@ fill_output_fix(12, FM_buf8, 6, 0, 0);
 #endif
 
 
-buffer_copy_from_axi(FM_buf1, DDR_buf[7]);
-load_weight_3D_from_axi(weight_buf_3x3_1, conv_weight_3x3_all[weight_3x3_index]);
+buffer_copy_from_axi(FM_buf14, DDR_buf[7]);
+load_weight_3D_from_axi(weight_buf_3x3_2, conv_weight_3x3_all[weight_3x3_index]);
 load_bias_from_axi(bias_buf, bias_all[bias_index]);
 
 set_bias(FM_buf9, bias_buf);
-CONV_3x3_group(FM_buf1, FM_buf9, weight_buf_3x3_1);
+CONV_3x3_group(FM_buf14, FM_buf9, weight_buf_3x3_2);
 Relu(FM_buf9);
 //buffer_copy_to_axi(DDR_buf[7], FM_bufs[2]);
 
@@ -1284,12 +1292,12 @@ fill_output_fix(12, FM_buf10, 8, 0, 0);
 #endif
 
 
-buffer_copy_from_axi(FM_buf1, DDR_buf[9]);
-load_weight_3D_from_axi(weight_buf_3x3_1, conv_weight_3x3_all[weight_3x3_index]);
+buffer_copy_from_axi(FM_buf14, DDR_buf[9]);
+load_weight_3D_from_axi(weight_buf_3x3_2, conv_weight_3x3_all[weight_3x3_index]);
 load_bias_from_axi(bias_buf, bias_all[bias_index]);
 
 set_bias(FM_buf11, bias_buf);
-CONV_3x3_group(FM_buf1, FM_buf11, weight_buf_3x3_1);
+CONV_3x3_group(FM_buf14, FM_buf11, weight_buf_3x3_2);
 Relu(FM_buf11);
 //buffer_copy_to_axi(DDR_buf[9], FM_bufs[2]);
 
@@ -1328,12 +1336,12 @@ fill_output_fix(12, FM_buf12, 10, 0, 0);
 #endif
 
 
-buffer_copy_from_axi(FM_buf1, DDR_buf[11]);
-load_weight_3D_from_axi(weight_buf_3x3_1, conv_weight_3x3_all[weight_3x3_index]);
+buffer_copy_from_axi(FM_buf14, DDR_buf[11]);
+load_weight_3D_from_axi(weight_buf_3x3_2, conv_weight_3x3_all[weight_3x3_index]);
 load_bias_from_axi(bias_buf, bias_all[bias_index]);
 
 set_bias(FM_buf13, bias_buf);
-CONV_3x3_group(FM_buf1, FM_buf13, weight_buf_3x3_1);
+CONV_3x3_group(FM_buf14, FM_buf13, weight_buf_3x3_2);
 Relu(FM_buf13);
 //buffer_copy_to_axi(DDR_buf[11], FM_bufs[2]);
 
@@ -1377,9 +1385,9 @@ fill_output_fix(12, FM_buf13, 11, 0, 0);
 			CONV_1x1(FM_buf2, FM_buf_1x1_out, weight_buf_1x1_1);
 			weight_1x1_index++;
 
-			load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
+			load_weight_2D_from_axi(weight_buf_1x1_2, conv_weight_1x1_all[weight_1x1_index]);
 			//buffer_copy_from_axi(FM_bufs[2], DDR_buf[ch_conv12]);
-			CONV_1x1(FM_buf3, FM_buf_1x1_out, weight_buf_1x1_1);
+			CONV_1x1(FM_buf3, FM_buf_1x1_out, weight_buf_1x1_2);
 			weight_1x1_index++;
 
 			load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
@@ -1387,9 +1395,9 @@ fill_output_fix(12, FM_buf13, 11, 0, 0);
 			CONV_1x1(FM_buf4, FM_buf_1x1_out, weight_buf_1x1_1);
 			weight_1x1_index++;
 
-			load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
+			load_weight_2D_from_axi(weight_buf_1x1_2, conv_weight_1x1_all[weight_1x1_index]);
 			//buffer_copy_from_axi(FM_bufs[2], DDR_buf[ch_conv12]);
-			CONV_1x1(FM_buf5, FM_buf_1x1_out, weight_buf_1x1_1);
+			CONV_1x1(FM_buf5, FM_buf_1x1_out, weight_buf_1x1_2);
 			weight_1x1_index++;
 
 			load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
@@ -1397,9 +1405,9 @@ fill_output_fix(12, FM_buf13, 11, 0, 0);
 			CONV_1x1(FM_buf6, FM_buf_1x1_out, weight_buf_1x1_1);
 			weight_1x1_index++;
 
-			load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
+			load_weight_2D_from_axi(weight_buf_1x1_2, conv_weight_1x1_all[weight_1x1_index]);
 			//buffer_copy_from_axi(FM_bufs[2], DDR_buf[ch_conv12]);
-			CONV_1x1(FM_buf7, FM_buf_1x1_out, weight_buf_1x1_1);
+			CONV_1x1(FM_buf7, FM_buf_1x1_out, weight_buf_1x1_2);
 			weight_1x1_index++;
 
 			load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
@@ -1407,9 +1415,9 @@ fill_output_fix(12, FM_buf13, 11, 0, 0);
 			CONV_1x1(FM_buf8, FM_buf_1x1_out, weight_buf_1x1_1);
 			weight_1x1_index++;
 
-			load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
+			load_weight_2D_from_axi(weight_buf_1x1_2, conv_weight_1x1_all[weight_1x1_index]);
 			//buffer_copy_from_axi(FM_bufs[2], DDR_buf[ch_conv12]);
-			CONV_1x1(FM_buf9, FM_buf_1x1_out, weight_buf_1x1_1);
+			CONV_1x1(FM_buf9, FM_buf_1x1_out, weight_buf_1x1_2);
 			weight_1x1_index++;
 
 			load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
@@ -1417,9 +1425,9 @@ fill_output_fix(12, FM_buf13, 11, 0, 0);
 			CONV_1x1(FM_buf10, FM_buf_1x1_out, weight_buf_1x1_1);
 			weight_1x1_index++;
 
-			load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
+			load_weight_2D_from_axi(weight_buf_1x1_2, conv_weight_1x1_all[weight_1x1_index]);
 			//buffer_copy_from_axi(FM_bufs[2], DDR_buf[ch_conv12]);
-			CONV_1x1(FM_buf11, FM_buf_1x1_out, weight_buf_1x1_1);
+			CONV_1x1(FM_buf11, FM_buf_1x1_out, weight_buf_1x1_2);
 			weight_1x1_index++;
 
 			load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
@@ -1427,9 +1435,9 @@ fill_output_fix(12, FM_buf13, 11, 0, 0);
 			CONV_1x1(FM_buf12, FM_buf_1x1_out, weight_buf_1x1_1);
 			weight_1x1_index++;
 
-			load_weight_2D_from_axi(weight_buf_1x1_1, conv_weight_1x1_all[weight_1x1_index]);
+			load_weight_2D_from_axi(weight_buf_1x1_2, conv_weight_1x1_all[weight_1x1_index]);
 			//buffer_copy_from_axi(FM_bufs[2], DDR_buf[ch_conv12]);
-			CONV_1x1(FM_buf13, FM_buf_1x1_out, weight_buf_1x1_1);
+			CONV_1x1(FM_buf13, FM_buf_1x1_out, weight_buf_1x1_2);
 			weight_1x1_index++;
 		//}
 
