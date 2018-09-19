@@ -1,0 +1,29 @@
+INFO: [HLS 200-10] Running '/opt/Xilinx/Vivado/2017.3/bin/unwrapped/lnx64.o/vivado_hls'
+INFO: [HLS 200-10] For user 'cong' on host 'ubuntu' (Linux_x86_64 version 4.4.0-134-generic) on Wed Sep 19 10:02:08 CDT 2018
+INFO: [HLS 200-10] On os Ubuntu 16.04.5 LTS
+INFO: [HLS 200-10] In directory '/home/cong/vivado/2018DACSDC/NewDesigns/hls_14layers_512_v5_66_4_91ms'
+INFO: [HLS 200-10] Opening project '/home/cong/vivado/2018DACSDC/NewDesigns/hls_14layers_512_v5_66_4_91ms/model'.
+INFO: [HLS 200-10] Opening solution '/home/cong/vivado/2018DACSDC/NewDesigns/hls_14layers_512_v5_66_4_91ms/model/fix_8_v1'.
+INFO: [SYN 201-201] Setting up clock 'default' with a period of 10ns.
+INFO: [HLS 200-10] Setting target device to 'xc7z020clg400-1'
+INFO: [SIM 211-2] *************** CSIM start ***************
+INFO: [SIM 211-4] CSIM will launch GCC as the compiler.
+   Compiling ../../../../output_verify.cc in debug mode
+   Compiling ../../../../reorder_weight.cc in debug mode
+   Compiling ../../../../tb.cc in debug mode
+   Compiling ../../../../conv_1x1_fl.cc in debug mode
+   Compiling ../../../../conv_3x3_group_fl.cc in debug mode
+   Compiling ../../../../net_hls.cc in debug mode
+   Generating csim.exe
+../../../../output_verify.cc: In function ‘int PL_golden_compare_layer_1()’:
+../../../../output_verify.cc:985:19: warning: deprecated conversion from string constant to ‘char*’ [-Wwrite-strings]
+../../../../output_verify.cc: In function ‘int PL_golden_compare_layer_2()’:
+../../../../output_verify.cc:1012:19: warning: deprecated conversion from string constant to ‘char*’ [-Wwrite-strings]
+../../../../output_verify.cc: In function ‘int PL_golden_compare_layer_3()’:
+../../../../output_verify.cc:1040:19: warning: deprecated conversion from string constant to ‘char*’ [-Wwrite-strings]
+../../../../output_verify.cc: In function ‘int PL_golden_compare_layer_4()’:
+../../../../output_verify.cc:1073:19: warning: deprecated conversion from string constant to ‘char*’ [-Wwrite-strings]
+../../../../output_verify.cc: In function ‘int PL_golden_compare_layer_5()’:
+../../../../output_verify.cc:1100:19: warning: deprecated conversion from string constant to ‘char*’ [-Wwrite-strings]
+../../../../tb.cc: In function ‘int main()’:
+../../../../tb.cc:194:26: warning: deprecated conversion from string constant to ‘char*’ [-Wwrite-strings]
